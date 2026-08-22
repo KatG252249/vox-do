@@ -5,6 +5,8 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 from tools.google_workspace import build_presentation_file
+from typing import List, Dict, Any, Optional
+from tools.firstore_db import save_to_firestore  
 
 load_dotenv()
 
@@ -16,35 +18,63 @@ client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 # Tool Definitions (Google Agent Execution Layer)
 # -------------------------------------------------------------------------
 
-def log_journal_entry(transcript: str, summary: str, sentiment: str, tags: List[str]) -> Dict[str, Any]:
+def log_journal_entry(summary: str, sentiment: str, tags: List[str]) -> Dict[str, Any]:
     """
-    Logs an introspective personal journal entry, sentiment analysis, and core tags.
+    Logs and archives personal voice journal entries with extracted tags and sentiment analysis.
     """
     print(f" [Tool: Journal] Summary: {summary} | Sentiment: {sentiment} | Tags: {tags}")
+    
+    # Save to Google Cloud Firestore
+    firestore_res = save_to_firestore("voxdo_journals", {
+        "summary": summary,
+        "sentiment": sentiment,
+        "tags": tags
+    })
+
     return {
         "status": "success",
         "action": "journal_logged",
         "summary": summary,
         "sentiment": sentiment,
         "tags": tags,
-        "logged_at": datetime.now().isoformat()
+        "storage": firestore_res
     }
 
-def create_task_item(title: str, subject: Optional[str] = None, due_date: Optional[str] = None, priority: str = "Medium") -> Dict[str, Any]:
+def create_task_item(title: str, subject: Any = None, due_date: Any = None, priority: str = "Medium") -> Dict[str, Any]:
     """
     Creates an actionable task, assignment, or to-do item with due dates and subject metadata.
     """
+    if isinstance(subject, dict):
+        subject = subject.get("category", "") or subject.get("course", "") or str(subject)
+    elif not subject:
+        subject = "General"
+
+    if isinstance(due_date, dict):
+        due_date = due_date.get("date", "") or str(due_date)
+    elif not due_date:
+        due_date = "No deadline specified"
+
     print(f" [Tool: Task Tracker] Title: {title} | Subject: {subject} | Due: {due_date} | Priority: {priority}")
+    
+    # Save to Google Cloud Firestore
+    firestore_res = save_to_firestore("voxdo_tasks", {
+        "title": title,
+        "subject": str(subject),
+        "due_date": str(due_date),
+        "priority": str(priority)
+    })
+
     return {
         "status": "success",
         "action": "task_created",
         "title": title,
-        "subject": subject or "General",
-        "due_date": due_date or "No deadline specified",
-        "priority": priority
+        "subject": str(subject),
+        "due_date": str(due_date),
+        "priority": str(priority),
+        "storage": firestore_res
     }
 
-def generate_presentation_draft(topic: str, slide_titles: List[str], target_audience: str = "Classmates") -> Dict[str, Any]:
+def generate_presentation_draft(topic: str, slide_titles: Any, target_audience: str = "Classmates") -> Dict[str, Any]:
     """
     Generates a draft presentation outline and slide structure based on lecture notes or assignments.
     """
@@ -52,12 +82,13 @@ def generate_presentation_draft(topic: str, slide_titles: List[str], target_audi
     filepath = build_presentation_file(topic=topic, slide_titles=slide_titles)
     filename = os.path.basename(filepath)
     
+    count = len(slide_titles) if isinstance(slide_titles, list) else 4
+    
     return {
         "status": "success",
         "action": "presentation_generated",
         "topic": topic,
-        "slides_count": len(slide_titles),
-        "slide_outline": slide_titles,
+        "slides_count": count,
         "download_url": f"http://localhost:8000/download/{filename}"
     }
 
@@ -152,6 +183,7 @@ def run_voxdo_pipeline(audio_file_path: str, user_time_context: Optional[str] = 
             system_instruction=system_instruction,
             tools=AGENT_TOOLS,
             temperature=0.1,
+            automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True)
         ),
     )
 

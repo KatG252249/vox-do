@@ -85,6 +85,8 @@ async def process_voice_endpoint(
             detail=f"Configuration error: {str(ve)}"
         )
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process voice pipeline: {str(e)}"

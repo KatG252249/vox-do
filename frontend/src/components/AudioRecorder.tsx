@@ -65,7 +65,7 @@ export default function AudioRecorder({
     formData.append("user_time_context", new Date().toLocaleString());
 
     try {
-      const response = await fetch("http://localhost:8000/api/process-voice", {
+      const response = await fetch("http://127.0.0.1:8000/api/process-voice", {
         method: "POST",
         body: formData,
       });
