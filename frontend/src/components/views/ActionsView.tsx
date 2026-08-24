@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft, Clock, Trash2 } from 'lucide-react';
 import { Task } from '@/app/page';
 
 interface ActionsViewProps {
@@ -9,14 +9,13 @@ interface ActionsViewProps {
   darkMode: boolean;
   tasks: Task[];
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
+  onDelete: (id: string) => void;
 }
 
-export default function ActionsView({ onBack, darkMode, tasks, setTasks }: ActionsViewProps) {
+export default function ActionsView({ onBack, darkMode, tasks, setTasks, onDelete }: ActionsViewProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
-  const handleDragStart = (id: string) => {
-    setDraggedId(id);
-  };
+  const handleDragStart = (id: string) => setDraggedId(id);
 
   const handleDrop = (newStatus: 'QUEUE' | 'PROCESSING' | 'ARCHIVE') => {
     if (!draggedId) return;
@@ -24,9 +23,7 @@ export default function ActionsView({ onBack, darkMode, tasks, setTasks }: Actio
     setDraggedId(null);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
+  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
 
   const moveTaskMobile = (id: string, nextStatus: 'QUEUE' | 'PROCESSING' | 'ARCHIVE') => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, status: nextStatus } : t));
@@ -40,14 +37,10 @@ export default function ActionsView({ onBack, darkMode, tasks, setTasks }: Actio
         onDragOver={handleDragOver}
         onDrop={() => handleDrop(status)}
         className={`border p-3 sm:p-4 flex flex-col gap-2.5 min-h-[350px] sm:min-h-[460px] transition-colors ${
-          darkMode 
-            ? 'border-[#1f3a2c] bg-[#0a0f0d]' 
-            : 'border-emerald-200 bg-emerald-50/60 shadow-sm'
+          darkMode ? 'border-[#1f3a2c] bg-[#0a0f0d]' : 'border-emerald-200 bg-emerald-50/60 shadow-sm'
         }`}
       >
-        <div className={`border-b-2 pb-1.5 text-xs font-bold uppercase flex justify-between ${
-          darkMode ? darkColor : lightColor
-        }`}>
+        <div className={`border-b-2 pb-1.5 text-xs font-bold uppercase flex justify-between ${darkMode ? darkColor : lightColor}`}>
           <span>{title} [{colTasks.length}]</span>
         </div>
 
@@ -57,10 +50,8 @@ export default function ActionsView({ onBack, darkMode, tasks, setTasks }: Actio
               key={task.id}
               draggable
               onDragStart={() => handleDragStart(task.id)}
-              className={`border p-3.5 space-y-2 cursor-grab active:cursor-grabbing transition-all ${
-                darkMode 
-                  ? 'border-[#1f3a2c] bg-[#0d1411] hover:border-[#00ff41]' 
-                  : 'border-emerald-200 bg-white hover:border-emerald-600 shadow-sm'
+              className={`border p-3.5 space-y-2 cursor-grab active:cursor-grabbing transition-all group relative ${
+                darkMode ? 'border-[#1f3a2c] bg-[#0d1411] hover:border-[#00ff41]' : 'border-emerald-200 bg-white hover:border-emerald-600 shadow-sm'
               }`}
             >
               <div className="flex justify-between items-center text-[9px] font-bold">
@@ -70,7 +61,7 @@ export default function ActionsView({ onBack, darkMode, tasks, setTasks }: Actio
                 <span className={darkMode ? 'text-gray-500 uppercase' : 'text-gray-400 uppercase'}>{task.category}</span>
               </div>
 
-              <div className={`text-xs font-sans font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              <div className={`text-xs font-sans font-medium pr-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                 {task.title}
               </div>
               
@@ -80,32 +71,23 @@ export default function ActionsView({ onBack, darkMode, tasks, setTasks }: Actio
                 </div>
 
                 <div className="flex sm:hidden gap-1 text-[9px]">
-                  {status !== 'QUEUE' && (
-                    <button 
-                      onClick={() => moveTaskMobile(task.id, 'QUEUE')}
-                      className={`px-1.5 py-0.5 border ${darkMode ? 'border-[#1f3a2c] text-gray-400' : 'border-gray-300 text-gray-700'}`}
-                    >
-                      ←
-                    </button>
-                  )}
-                  {status !== 'PROCESSING' && (
-                    <button 
-                      onClick={() => moveTaskMobile(task.id, 'PROCESSING')}
-                      className={`px-1.5 py-0.5 border font-bold ${darkMode ? 'border-[#00ff41] text-[#00ff41]' : 'border-emerald-600 text-emerald-700'}`}
-                    >
-                      PROG
-                    </button>
-                  )}
-                  {status !== 'ARCHIVE' && (
-                    <button 
-                      onClick={() => moveTaskMobile(task.id, 'ARCHIVE')}
-                      className={`px-1.5 py-0.5 border ${darkMode ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-700'}`}
-                    >
-                      ✓
-                    </button>
-                  )}
+                  {/* ... mobile buttons remain the same ... */}
+                  {status !== 'QUEUE' && <button onClick={() => moveTaskMobile(task.id, 'QUEUE')} className={`px-1.5 py-0.5 border ${darkMode ? 'border-[#1f3a2c] text-gray-400' : 'border-gray-300 text-gray-700'}`}>←</button>}
+                  {status !== 'PROCESSING' && <button onClick={() => moveTaskMobile(task.id, 'PROCESSING')} className={`px-1.5 py-0.5 border font-bold ${darkMode ? 'border-[#00ff41] text-[#00ff41]' : 'border-emerald-600 text-emerald-700'}`}>PROG</button>}
+                  {status !== 'ARCHIVE' && <button onClick={() => moveTaskMobile(task.id, 'ARCHIVE')} className={`px-1.5 py-0.5 border ${darkMode ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-700'}`}>✓</button>}
                 </div>
               </div>
+
+              {/* Task Delete Button */}
+              <button 
+                onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
+                className={`absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded ${
+                  darkMode ? 'text-red-500 hover:bg-red-500/20' : 'text-red-600 hover:bg-red-50'
+                }`}
+                title="Delete Task"
+              >
+                <Trash2 size={13} />
+              </button>
             </div>
           ))}
         </div>
@@ -115,14 +97,10 @@ export default function ActionsView({ onBack, darkMode, tasks, setTasks }: Actio
 
   return (
     <div className="space-y-4">
-      <div className={`flex items-center pb-2 border-b ${
-        darkMode ? 'border-[#1f3a2c]' : 'border-emerald-200'
-      }`}>
+      <div className={`flex items-center pb-2 border-b ${darkMode ? 'border-[#1f3a2c]' : 'border-emerald-200'}`}>
         <button 
           onClick={onBack}
-          className={`flex items-center gap-2 text-xs font-bold uppercase cursor-pointer ${
-            darkMode ? 'text-[#00ff41] hover:underline' : 'text-emerald-800 hover:underline'
-          }`}
+          className={`flex items-center gap-2 text-xs font-bold uppercase cursor-pointer ${darkMode ? 'text-[#00ff41] hover:underline' : 'text-emerald-800 hover:underline'}`}
         >
           <ArrowLeft size={14} /> Back to Dashboard
         </button>
