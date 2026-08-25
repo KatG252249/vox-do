@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { Mic, CheckCircle2, Clock, Loader2 } from 'lucide-react';
 import { ViewType, Task, JournalEntry, ArtifactItem } from '@/app/page';
+import { useSession} from 'next-auth/react';
 
 interface DashboardViewProps {
   onNavigate: (v: ViewType) => void;
@@ -21,11 +22,13 @@ export default function DashboardView({
   artifacts, 
   onNewProcessedData 
 }: DashboardViewProps) {
+  const {data: session} = useSession();
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+
 
   // Start / Stop Live Audio Capture
   const handleToggleRecording = async () => {
@@ -69,6 +72,22 @@ export default function DashboardView({
     setIsProcessing(true);
     const formData = new FormData();
     formData.append('file', audioBlob, 'voxdo-recording.webm');
+
+    const handleStopRecording = async (audioBlob: Blob) => {
+      setIsRecording(false);
+
+      console.log("Current NextAuth Session:", session);
+
+      const formData = new FormData();
+      formData.append("file", audioBlob, "voxdo-recording.webm");
+
+    }
+    if (session && (session as any).accessToken){
+      console.log("Attaching Access Token to FormData!");
+      formData.append('access_token', (session as any).accessToken);
+    } else {
+      console.warn("No access token found in session!");
+    }
 
     try {
       const response = await fetch('http://localhost:8000/api/process-audio', {

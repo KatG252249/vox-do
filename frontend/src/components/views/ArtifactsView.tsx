@@ -94,15 +94,16 @@ export default function ArtifactsView({ onBack, darkMode, artifacts, onDelete }:
                     </button>
 
                     {item.action === 'download' ? (
-                      <button className={`border px-3 py-1 text-[9px] sm:text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer transition-colors ${
-                        darkMode ? 'border-[#00ff41] text-[#00ff41] hover:bg-[#00ff41] hover:text-black' : 'border-emerald-600 text-emerald-700 hover:bg-emerald-600 hover:text-white'
-                      }`}>
+                      <button className={`...`}>
                         <Download size={10} /> DL
                       </button>
                     ) : (
-                      <button className={`border px-3 py-1 text-[9px] sm:text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer transition-colors ${
-                        darkMode ? 'border-emerald-500 text-emerald-400 hover:bg-emerald-500 hover:text-black' : 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700'
-                      }`}>
+                      <button 
+                        onClick={() => item.url ? window.open(item.url, '_blank') : alert('Document URL not available.')}
+                        className={`border px-3 py-1 text-[9px] sm:text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer transition-colors ${
+                          darkMode ? 'border-emerald-500 text-emerald-400 hover:bg-emerald-500 hover:text-black' : 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700'
+                        }`}
+                    >
                         <ExternalLink size={10} /> OPEN
                       </button>
                     )}

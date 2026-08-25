@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowLeft, Clock, Trash2 } from 'lucide-react';
+import { ArrowLeft, Clock, Trash2, Calendar} from 'lucide-react';
 import { Task } from '@/app/page';
 
 interface ActionsViewProps {
@@ -66,12 +66,30 @@ export default function ActionsView({ onBack, darkMode, tasks, setTasks, onDelet
               </div>
               
               <div className="flex justify-between items-center pt-1">
-                <div className={`text-[10px] flex items-center gap-1 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                  <Clock size={10} /> {task.due}
+                {/* LEFT SIDE: Clock and Calendar Link */}
+                <div className="flex items-center gap-3">
+                  <div className={`text-[10px] flex items-center gap-1 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    <Clock size={10} /> {task.due}
+                  </div>
+
+                  {/* NEW: The Calendar Link */}
+                  {task.calendar_url && (
+                    <a 
+                      href={task.calendar_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className={`flex items-center gap-1 text-[10px] transition-colors cursor-pointer ${
+                        darkMode ? 'text-[#00ff41] hover:text-emerald-400' : 'text-emerald-600 hover:text-emerald-700'
+                      }`}
+                    >
+                      <Calendar size={10} />
+                      <span className="font-bold">CALENDAR</span>
+                    </a>
+                  )}
                 </div>
 
+                {/* RIGHT SIDE: Mobile buttons */}
                 <div className="flex sm:hidden gap-1 text-[9px]">
-                  {/* ... mobile buttons remain the same ... */}
                   {status !== 'QUEUE' && <button onClick={() => moveTaskMobile(task.id, 'QUEUE')} className={`px-1.5 py-0.5 border ${darkMode ? 'border-[#1f3a2c] text-gray-400' : 'border-gray-300 text-gray-700'}`}>←</button>}
                   {status !== 'PROCESSING' && <button onClick={() => moveTaskMobile(task.id, 'PROCESSING')} className={`px-1.5 py-0.5 border font-bold ${darkMode ? 'border-[#00ff41] text-[#00ff41]' : 'border-emerald-600 text-emerald-700'}`}>PROG</button>}
                   {status !== 'ARCHIVE' && <button onClick={() => moveTaskMobile(task.id, 'ARCHIVE')} className={`px-1.5 py-0.5 border ${darkMode ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-700'}`}>✓</button>}

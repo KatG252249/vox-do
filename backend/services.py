@@ -1,64 +1,108 @@
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials
+from google.cloud import firestore
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 import datetime
 
-# --- 1. FIRESTORE SETUP ---
-# You will need to download your serviceAccountKey.json from Firebase Console
+# ==========================================
+# 1. FIRESTORE DATABASE SETUP
+# ==========================================
 try:
-    if not firebase_admin._apps:
-        cred = credentials.Certificate("serviceAccountKey.json")
-        firebase_admin.initialize_app(cred)
-    db = firestore.client()
+    db = firestore.Client.from_service_account_json(
+        "serviceAccountKey.json",
+        project="ageless-domain-304911",
+        database="vox-do-app"
+    )
+    print("[+] Firestore connected successfully.")
 except Exception as e:
-    print(f"Firebase init error (Make sure serviceAccountKey.json exists): {e}")
+    print(f"[!] Firestore init error: {e}")
     db = None
 
-def save_to_firestore(collection_name, data):
+def save_to_firestore(collection_name: str, data: dict):
+    """Saves a dictionary to a specific Firestore collection."""
     if not db:
+        print("[!] Database not initialized.")
         return None
-    doc_ref = db.collection(collection_name).document()
-    data['id'] = doc_ref.id # Attach the generated ID
-    doc_ref.set(data)
-    return doc_ref.id
+    try:
+        doc_ref = db.collection(collection_name).document()
+        # Ensure the document knows its own ID for easy frontend updates later
+        data['id'] = doc_ref.id 
+        data['created_at'] = datetime.datetime.now().isoformat()
+        doc_ref.set(data)
+        return doc_ref.id
+    except Exception as e:
+        print(f"[!] Error saving to Firestore ({collection_name}): {e}")
+        return None
 
-# --- 2. GOOGLE WORKSPACE SETUP ---
-def get_google_service(access_token, api_name, api_version):
-    """Builds a Google API client using the user's NextAuth token."""
+# ==========================================
+# 2. GOOGLE WORKSPACE API SETUP
+# ==========================================
+def get_google_service(access_token: str, api_name: str, api_version: str):
+    """Builds an authenticated client for any Google service."""
     creds = Credentials(token=access_token)
     return build(api_name, api_version, credentials=creds)
 
-def create_google_doc(access_token, title, content):
-    """Creates a Google Doc and inserts the generated summary."""
+def create_google_doc(access_token: str, title: str, content: str):
+    """Generates a new Google Doc and inserts text."""
     try:
         service = get_google_service(access_token, 'docs', 'v1')
+        # Create empty doc
         doc = service.documents().create(body={'title': title}).execute()
         document_id = doc.get('documentId')
         
-        # Insert text into the new document
-        requests = [{'insertText': {'location': {'index': 1}, 'text': content}}]
-        service.documents().batchUpdate(
-            documentId=document_id, 
-            body={'requests': requests}
-        ).execute()
-        
+        # Insert content
+        if content:
+            requests = [{'insertText': {'location': {'index': 1}, 'text': content}}]
+            service.documents().batchUpdate(
+                documentId=document_id, 
+                body={'requests': requests}
+            ).execute()
+            
+        print(f"[+] Google Doc created: {title}")
         return f"https://docs.google.com/document/d/{document_id}/edit"
     except Exception as e:
-        print(f"Error creating Google Doc: {e}")
+        print(f"[!] Google Docs API Error: {e}")
+        return None
+    
+def create_google_sheet(access_token: str, title: str, headers: list = None):
+    """Generates a new Google Sheet and optionally adds column headers."""
+    try:
+        service = get_google_service(access_token, 'sheets', 'v4')
+        
+        # 1. Create the empty spreadsheet
+        spreadsheet_body = {'properties': {'title': title}}
+        sheet = service.spreadsheets().create(body=spreadsheet_body, fields='spreadsheetId').execute()
+        spreadsheet_id = sheet.get('spreadsheetId')
+        
+        # 2. Insert headers into the first row if provided
+        if headers:
+            body = {'values': [headers]}
+            service.spreadsheets().values().update(
+                spreadsheetId=spreadsheet_id,
+                range='A1',  # Start at the top left cell
+                valueInputOption='RAW',
+                body=body
+            ).execute()
+            
+        print(f"[+] Google Sheet created: {title}")
+        return f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit"
+    except Exception as e:
+        print(f"[!] Google Sheets API Error: {e}")
         return None
 
-def create_calendar_event(access_token, title, date_str):
+def create_calendar_event(access_token: str, title: str, date_str: str):
     """Adds a task to Google Calendar as an all-day event."""
     try:
         service = get_google_service(access_token, 'calendar', 'v3')
-        event = {
-            'summary': f"VoxDo Task: {title}",
-            'start': {'date': date_str}, # Format: YYYY-MM-DD
+        event_body = {
+            'summary': f"VoxDo: {title}",
+            'start': {'date': date_str}, # Expects YYYY-MM-DD
             'end': {'date': date_str}
         }
-        created_event = service.events().insert(calendarId='primary', body=event).execute()
-        return created_event.get('htmlLink')
+        event = service.events().insert(calendarId='primary', body=event_body).execute()
+        print(f"[+] Calendar Event created: {title}")
+        return event.get('htmlLink')
     except Exception as e:
-        print(f"Error creating Calendar Event: {e}")
+        print(f"[!] Google Calendar API Error: {e}")
         return None

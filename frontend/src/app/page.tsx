@@ -16,6 +16,7 @@ export interface Task {
   priority: 'HIGH' | 'NORMAL' | 'ROUTINE';
   status: 'QUEUE' | 'PROCESSING' | 'ARCHIVE';
   due: string;
+  calendar_url?: string;
 }
 
 export interface JournalEntry {
@@ -37,6 +38,7 @@ export interface ArtifactItem {
   course: string;
   date: string;
   action: string;
+  url?: string;
 }
 
 const initialTasks: Task[] = [
@@ -103,7 +105,8 @@ export default function Home() {
         category: t.category || "General",
         priority: t.priority || "NORMAL",
         status: "QUEUE",
-        due: t.due || "This Week"
+        due: t.due || "This Week",
+        calendar_url: t.calendar_url 
       }));
       setTasks(prev => [...newTasks, ...prev]);
     }
@@ -115,7 +118,8 @@ export default function Home() {
         name: data.artifact.name,
         course: data.artifact.course || "General",
         date: dateStr,
-        action: 'open'
+        action: 'open',
+        url: data.artifact.url  
       };
       setArtifacts(prev => [newArtifact, ...prev]);
     }
