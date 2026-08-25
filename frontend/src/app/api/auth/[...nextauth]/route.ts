@@ -12,8 +12,8 @@ const handler = NextAuth({
           access_type: "offline",
           response_type: "code",
           // Base scopes to get the user's email and name. 
-          // We will add the Docs, Sheets, and Calendar scopes here later!
-          scope: "openid email profile https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/presentations https://www.googleapis.com/auth/calendar", 
+        
+          scope: "openid email profile https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/presentations https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/forms.body"
         }
       }
     }),
