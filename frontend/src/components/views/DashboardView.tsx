@@ -4,6 +4,10 @@ import React, { useState, useRef } from 'react';
 import { Mic, CheckCircle2, Clock, Loader2 } from 'lucide-react';
 import { ViewType, Task, JournalEntry, ArtifactItem } from '@/app/page';
 import { useSession} from 'next-auth/react';
+import { useEffect } from 'react';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase'; 
+
 
 interface DashboardViewProps {
   onNavigate: (v: ViewType) => void;
@@ -29,6 +33,77 @@ export default function DashboardView({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
+  console.log("DashboardView component is rendering! Session is:", session);
+
+  useEffect(() => {
+
+    console.log("Checking session before DB fetch:", session); 
+
+    const fetchUserData = async () => {
+      if (!session?.user?.email) {
+        console.log("Aborting fetch: No user email found."); 
+        return; 
+      }
+
+      try {
+        console.log("Fetching data for:", session.user.email);
+        const email = session.user.email;
+        
+        // 1. Fetch Tasks
+        const qTasks = query(collection(db, "tasks"), where("userEmail", "==", email));
+        const snapTasks = await getDocs(qTasks);
+        const fetchedTasks = snapTasks.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // 2. Fetch Artifacts
+        const qArtifacts = query(collection(db, "artifacts"), where("userEmail", "==", email));
+        const snapArtifacts = await getDocs(qArtifacts);
+        const fetchedArtifacts = snapArtifacts.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // 3. Fetch Journals
+        const qJournals = query(collection(db, "journals"), where("userEmail", "==", email));
+        const snapJournals = await getDocs(qJournals);
+        const fetchedJournals = snapJournals.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // 3. Send the array to your UI!
+        onNewProcessedData({ 
+            tasks: fetchedTasks as any,
+            artifacts: fetchedArtifacts as any,
+            journals: fetchedJournals as any 
+        });
+          console.log("Successfully loaded tasks into the UI!");
+        
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, [session]);
+    
+  const playCompletionChime = () => {
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'sine';
+    // Two-tone rising chime
+    osc.frequency.setValueAtTime(698.46, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.12);
+
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.45);
+  } catch (e) {
+    console.error('Audio cue error:', e);
+  }
+};
 
   // Start / Stop Live Audio Capture
   const handleToggleRecording = async () => {
@@ -89,6 +164,13 @@ export default function DashboardView({
       console.warn("No access token found in session!");
     }
 
+    if (session?.user?.email) {
+      console.log("Attaching user email for Firestore!");
+      formData.append('userEmail', session.user.email);
+    } else {
+      console.warn("No user email found in session!");
+    }
+
     try {
       const response = await fetch('http://localhost:8000/api/process-audio', {
         method: 'POST',
@@ -103,6 +185,8 @@ export default function DashboardView({
 
       if (result.data) {
         onNewProcessedData(result.data);
+
+        playCompletionChime();
       }
     } catch (error: any) {
       console.error("Error communicating with backend:", error);

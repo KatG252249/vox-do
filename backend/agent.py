@@ -6,7 +6,7 @@ from google.genai import types
 from dotenv import load_dotenv
 from tools.google_workspace import build_presentation_file
 from typing import List, Dict, Any, Optional
-from tools.firstore_db import save_to_firestore  
+from backend.tools.firestore_db import save_to_firestore  
 
 load_dotenv()
 

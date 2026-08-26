@@ -39,6 +39,8 @@ CRITICAL RULES:
 2. If the user does not explicitly request or discuss creating a document, presentation, or spreadsheet, the "artifact" key MUST be null.
 3. If generating a document, include a 'content' field in the JSON with the full requested text.
 4. If the user asks for a presentation or slide deck, also include a 'content' field with a short, formatted outline or bullet points to act as the slide notes.
+5. If the artifact type is a DOC, SLIDE, PRESENTATION, PPT, or PPTX, you MUST include a 'content' key in the artifact's JSON dictionary containing the actual generated text or bullet points. Do not leave the content field empty. 
+6. If the artifact type is a SPREADSHEET or SHEET, you MUST include a 'headers' key in the artifact's JSON dictionary containing an array of relevant strings representing the column names (e.g., ["Item", "Cost", "Date", "Notes"]).
 
 SCHEMA:
 {
@@ -79,9 +81,12 @@ def call_gemini_sync(audio_bytes: bytes, mime_type: str, prompt: str):
 @app.post("/api/process-audio")
 async def process_audio(
     file: UploadFile = File(...), 
-    access_token: str = Form(None) # Accepts the Google token from Next.js
+    access_token: str = Form(None), # Accepts the Google token from Next.js
+    userEmail: str = Form(None)#Accepts user's email from Next.js    
 ):
     print(f"\n[+] Ingesting audio upload: {file.filename}")
+    print(f"[+] User Email received: {userEmail}")
+    
     try:
         audio_bytes = await file.read()
         mime_type = file.content_type or "audio/webm"
@@ -104,6 +109,7 @@ async def process_audio(
         
         # 2. Save Journal to Firestore
         if data.get('journal') and data['journal'].get('title'):
+            data['journal']['userEmail'] = userEmail
             journal_entry = data['journal']
             journal_entry['date'] = today_str
             doc_id = services.save_to_firestore("journals", journal_entry)
@@ -113,6 +119,8 @@ async def process_audio(
         if data.get('tasks'):
             for task in data['tasks']:
                 task['calendar_url'] = None #Default
+                
+                task['userEmail'] = userEmail
                 
                 # If authorized and a valid date exists, push to calendar
                 if access_token and task.get('due'):
@@ -133,6 +141,7 @@ async def process_audio(
 
         # 4. Handle Artifacts & Google Workspace
         if data.get('artifact') and data['artifact'].get('type'):
+            data['artifact']['userEmail'] = userEmail
             artifact = data['artifact']
             artifact['url'] = None # Default
             
@@ -153,8 +162,9 @@ async def process_audio(
                     artifact['action'] = 'open' if doc_url else 'failed'
                 elif artifact['type'].upper() == 'SHEET':
                     print("[+] Requesting Google Sheets API...")
-                    # Default headers for an assignment tracker
-                    headers = ["Task Name", "Course", "Priority", "Status", "Due Date", "Notes"]
+                    
+                    # Extract dynamic headers from Gemini!
+                    headers = artifact.get('headers', [])
                     
                     sheet_url = services.create_google_sheet(
                         access_token,

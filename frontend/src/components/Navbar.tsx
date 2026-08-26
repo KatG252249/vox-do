@@ -4,6 +4,7 @@ import React from 'react';
 import { ViewType } from '@/app/page';
 import { Search, Settings, Moon, Sun, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useSession } from "next-auth/react";
 
 interface NavbarProps {
   darkMode: boolean;
@@ -14,6 +15,7 @@ interface NavbarProps {
 
 export default function Navbar({ darkMode, setDarkMode, setCurrentView }: NavbarProps) {
   const router = useRouter();
+  const { data: session } = useSession();
 
   return (
     <header className={`w-full border-b py-3 px-4 sm:px-6 sticky top-0 z-30 transition-colors ${
@@ -58,14 +60,22 @@ export default function Navbar({ darkMode, setDarkMode, setCurrentView }: Navbar
             >
               {darkMode ? <Sun size={15} /> : <Moon size={15} />}
             </button>
-            <button 
-              className={`p-2 border transition-colors cursor-pointer ${
-                darkMode ? 'border-[#1f3a2c] text-[#00ff41] hover:bg-[#0a0f0d]' : 'border-emerald-200 text-emerald-800 hover:bg-emerald-100/60'
-              }`}
-              title="Settings"
-            >
-              <Settings size={15} />
-            </button>
+            {/* User Profile Avatar */}
+            {session?.user?.image ? (
+              <img 
+                src={session.user.image} 
+                alt="User Profile" 
+                className="w-8 h-8 rounded-full border border-[#2e2e2e] hover:border-[#00ff9d] transition-colors cursor-pointer object-cover"
+                title={session.user.email || "Profile"} 
+              />
+            ) : (
+              <div 
+                className="w-8 h-8 rounded-full bg-[#1e1e1e] border border-[#2e2e2e] flex items-center justify-center text-[#00ff9d] text-sm font-bold uppercase cursor-pointer"
+                title={session?.user?.email || "Profile"}
+              >
+                {session?.user?.email?.charAt(0) || "U"}
+              </div>
+            )}
 
             {/* Log Out Button */}
             <button 

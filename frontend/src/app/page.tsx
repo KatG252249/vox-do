@@ -67,64 +67,75 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [darkMode, setDarkMode] = useState<boolean>(true);
   
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(initialJournal);
-  const [artifacts, setArtifacts] = useState<ArtifactItem[]>(initialArtifacts);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [artifacts, setArtifacts] = useState<ArtifactItem[]>([]);
 
   // --- DELETE HANDLERS ---
   const handleDeleteTask = (id: string) => setTasks(prev => prev.filter(t => t.id !== id));
   const handleDeleteJournal = (id: number) => setJournalEntries(prev => prev.filter(j => j.id !== id));
   const handleDeleteArtifact = (id: number) => setArtifacts(prev => prev.filter(a => a.id !== id));
 
-  const handleNewProcessedData = (data: { journal?: any; tasks?: Task[]; artifact?: any }) => {
+  const handleNewProcessedData = (data: { 
+    journal?: any; 
+    journals?: any[]; 
+    tasks?: Task[]; 
+    artifact?: any; 
+    artifacts?: any[] 
+  }) => {
     const today = new Date();
     const dateStr = today.toISOString().split('T')[0];
     const yearStr = today.getFullYear().toString();
     const monthStr = String(today.getMonth() + 1).padStart(2, '0');
     const dayStr = String(today.getDate()).padStart(2, '0');
 
+    // 1a. LIVE Journal (Single item from voice note)
     if (data.journal && data.journal.title && data.journal.summary) {
       const newEntry: JournalEntry = {
         id: Date.now(),
-        date: dateStr,
-        year: yearStr,
-        month: monthStr,
-        day: dayStr,
-        title: data.journal.title,
-        tone: data.journal.tone || "Productive",
-        summary: data.journal.summary,
-        tags: data.journal.tags || ["voice-log"]
+        date: dateStr, year: yearStr, month: monthStr, day: dayStr,
+        title: data.journal.title, tone: data.journal.tone || "Productive",
+        summary: data.journal.summary, tags: data.journal.tags || ["voice-log"]
       };
       setJournalEntries(prev => [newEntry, ...prev]);
     }
 
-    if (data.tasks && Array.isArray(data.tasks) && data.tasks.length > 0) {
-      const newTasks: Task[] = data.tasks.map((t: any, idx: number) => ({
-        id: `${Date.now()}-${idx}`,
-        title: t.title || "New Voice Task",
-        category: t.category || "General",
-        priority: t.priority || "NORMAL",
-        status: "QUEUE",
-        due: t.due || "This Week",
-        calendar_url: t.calendar_url 
-      }));
-      setTasks(prev => [...newTasks, ...prev]);
+    // 1b. DATABASE Journals (Array from Firestore)
+    if (data.journals && data.journals.length > 0) {
+      setJournalEntries(prev => {
+        const combined = [...prev, ...data.journals!];
+        return Array.from(new Map(combined.map(item => [item.id, item])).values());
+      });
     }
 
+    // 2. Tasks (Deduplicates both Live & DB arrays perfectly)
+    if (data.tasks && data.tasks.length > 0) {
+      setTasks(prevTasks => {
+        const combinedTasks = [...prevTasks, ...data.tasks!];
+        return Array.from(new Map(combinedTasks.map(t => [t.id, t])).values());
+      });
+    }
+
+    // 3a. LIVE Artifact (Single item from voice note)
     if (data.artifact && data.artifact.name && data.artifact.type) {
       const newArtifact: ArtifactItem = {
         id: Date.now(),
-        type: data.artifact.type,
-        name: data.artifact.name,
+        type: data.artifact.type, name: data.artifact.name,
         course: data.artifact.course || "General",
-        date: dateStr,
-        action: 'open',
-        url: data.artifact.url  
+        date: dateStr, action: 'open', url: data.artifact.url  
       };
       setArtifacts(prev => [newArtifact, ...prev]);
     }
+    
+    // 3b. DATABASE Artifacts (Array from Firestore)
+    if (data.artifacts && data.artifacts.length > 0) {
+      setArtifacts(prev => {
+        const combined = [...prev, ...data.artifacts!];
+        return Array.from(new Map(combined.map(item => [item.id, item])).values());
+      });
+    }
   };
-
+  
   return (
     <main className={`min-h-screen font-mono transition-colors duration-200 ${
       darkMode ? 'bg-stars-dark text-[#d1ffd7]' : 'bg-grid-light text-gray-900'

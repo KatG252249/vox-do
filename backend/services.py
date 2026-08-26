@@ -138,3 +138,31 @@ def create_google_slide(access_token: str, title: str, content: str = "Generated
     except Exception as e:
         print(f"[!] Google Slides API Error: {e}")
         return None
+    
+def create_google_form(access_token, title, description=""):
+    print(f"[+] Generating Google Form: {title}")
+    try:
+        credentials = Credentials(token=access_token)
+        # 1. Connect to the Forms API
+        service = build('forms', 'v1', credentials=credentials)
+        
+        # 2. Define the basic Form structure
+        form_body = {
+            "info": {
+                "title": title,
+                "documentTitle": title,
+            }
+        }
+        
+        # 3. Ask Google to create it
+        result = service.forms().create(body=form_body).execute()
+        form_id = result["formId"]
+        
+        print(f"[+] Form created successfully! ID: {form_id}")
+        
+        # 4. Return the URL so the user can open it
+        return f"https://docs.google.com/forms/d/{form_id}/edit"
+        
+    except Exception as e:
+        print(f"[ERROR] Failed to create Google Form: {e}")
+        return None
