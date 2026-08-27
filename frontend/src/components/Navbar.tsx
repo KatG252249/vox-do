@@ -33,7 +33,7 @@ export default function Navbar({ darkMode, setDarkMode, setCurrentView }: Navbar
           <span className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider pl-3 border-l ${
             darkMode ? 'border-[#1f3a2c] text-[#00ff41]' : 'border-emerald-300 text-emerald-700'
           }`}>
-            Zero-Touch Workspace
+            Study and Project Assistant 
           </span>
         </div>
 

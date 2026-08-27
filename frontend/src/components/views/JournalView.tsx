@@ -58,7 +58,7 @@ export default function JournalView({ onBack, darkMode, entries, onDelete }: Jou
             <Search size={12} className="text-gray-500 mr-1.5" />
             <input 
               type="text"
-              placeholder="Search tag (#nextjs)..."
+              placeholder="Search tag..."
               value={searchTag}
               onChange={(e) => setSearchTag(e.target.value)}
               className={`bg-transparent outline-none text-xs w-full ${

@@ -9,6 +9,7 @@ __pycache__/
 .env 
 *.json 
 service-account*.json 
+serviceAccountKey.json 
 
 # Node / Frontend
 node_modules/

@@ -3,8 +3,8 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "VoxDo | Study & Project Assistant",
-  description: "Zero-touch workspace for students.",
+  title: "VoxDo | Voice-activated Project Management and Study Tracking",
+  description: "Voice-activated project management and study tracking.",
 };
 
 export default function RootLayout({
