@@ -67,8 +67,8 @@ export default function DashboardView({
         // 3. Send the array to your UI!
         onNewProcessedData({ 
             tasks: fetchedTasks as any,
-            artifacts: fetchedArtifacts as any,
-            journals: fetchedJournals as any 
+            artifact: fetchedArtifacts as any,
+            journal: fetchedJournals as any 
         });
           console.log("Successfully loaded tasks into the UI!");
         
