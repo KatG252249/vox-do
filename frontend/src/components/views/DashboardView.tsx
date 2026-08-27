@@ -172,7 +172,7 @@ export default function DashboardView({
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/process-audio', {
+      const response = await fetch('${process.env.NEXT_PUBLIC_API_URL}/api/process-audio', {
         method: 'POST',
         body: formData,
       });
