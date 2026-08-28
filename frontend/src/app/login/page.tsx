@@ -47,9 +47,9 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-4">
-                <h2 className={`text-3xl font-black uppercase tracking-wider ${darkMode ? 'text-white' : 'text-emerald-950'}`}>Welcome Student</h2>
+                <h2 className={`text-3xl font-black uppercase tracking-wider ${darkMode ? 'text-white' : 'text-emerald-950'}`}>Welcome, Student...</h2>
                 <p className={`text-sm leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Sign in with your Google account to turn your spoken voice notes into clean study summaries, assignment checklists, and presentation decks.
+                  Sign in with your Google account to turn your spoken voice notes into study summaries, assignment checklists, and ready-to-edit Docs, Sheets, and Slides so you can start from a framework instead of a blank page.  
                 </p>
               </div>
 
@@ -111,8 +111,8 @@ export default function LoginPage() {
             <div className={`border p-8 sm:p-12 relative overflow-hidden ${darkMode ? 'border-[#1f3a2c] bg-[#0a0f0d]/80' : 'border-emerald-200 bg-white/90'}`}>
                <div className="space-y-8 relative z-10">
                  <div className="space-y-2">
-                   <h3 className={`text-[10px] uppercase tracking-widest font-bold ${darkMode ? 'text-[#00ff41]' : 'text-emerald-600'}`}>How it helps you</h3>
-                   <h2 className={`text-xl font-bold uppercase ${darkMode ? 'text-white' : 'text-emerald-950'}`}>Never manually type study notes again</h2>
+                   <h3 className={`text-[10px] uppercase tracking-widest font-bold ${darkMode ? 'text-[#00ff41]' : 'text-emerald-600'}`}>How VoxDo helps you</h3>
+                   <h2 className={`text-xl font-bold uppercase ${darkMode ? 'text-white' : 'text-emerald-950'}`}>Stop staring at a blank page.</h2>
                  </div>
                  <div className="space-y-6">
                     <div className="flex gap-3">
@@ -132,8 +132,8 @@ export default function LoginPage() {
                     <div className="flex gap-3">
                       <CheckCircle2 size={16} className={`mt-0.5 ${darkMode ? 'text-[#00ff41]' : 'text-emerald-600'}`} />
                       <div>
-                        <h4 className={`text-[10px] uppercase font-bold mb-1 ${darkMode ? 'text-white' : 'text-emerald-900'}`}>Instant Workspace Files</h4>
-                        <p className={`text-xs font-sans ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Create organized spreadsheets, study notes, and ready-to-use slides with zero manual formatting.</p>
+                        <h4 className={`text-[10px] uppercase font-bold mb-1 ${darkMode ? 'text-white' : 'text-emerald-900'}`}>Ready-to-Edit Workspace Files</h4>
+                        <p className={`text-xs font-sans ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Generates the framework for spreadsheets, docs, and slides with headers and structure already in place - you fill in the details.</p>
                       </div>
                     </div>
                  </div>

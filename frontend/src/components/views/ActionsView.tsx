@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Clock, Trash2, Calendar} from 'lucide-react';
 import { Task } from '@/app/page';
+import {db} from '@/lib/firebase';
+import {doc, updateDoc} from 'firebase/firestore';
 
 interface ActionsViewProps {
   onBack: () => void;
@@ -17,16 +19,29 @@ export default function ActionsView({ onBack, darkMode, tasks, setTasks, onDelet
 
   const handleDragStart = (id: string) => setDraggedId(id);
 
+  const updateTaskStatus = async (id:string, newStatus: 'QUEUE' | 'PROCESSING' | 'ARCHIVE') => {
+    // Update local state immediately  
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t));
+
+    //Persist the change to Firestore
+    try {
+      const taskRef = doc(db, "tasks", id);
+      await updateDoc(taskRef, { status: newStatus });
+    } catch (error) {
+      console.error("Failed to update task status in Firestore:", error);
+    }
+  };
+
   const handleDrop = (newStatus: 'QUEUE' | 'PROCESSING' | 'ARCHIVE') => {
     if (!draggedId) return;
-    setTasks(prev => prev.map(t => t.id === draggedId ? { ...t, status: newStatus } : t));
+    updateTaskStatus(draggedId, newStatus);
     setDraggedId(null);
   };
 
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
 
   const moveTaskMobile = (id: string, nextStatus: 'QUEUE' | 'PROCESSING' | 'ARCHIVE') => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, status: nextStatus } : t));
+    updateTaskStatus(id, nextStatus);
   };
 
   const renderColumn = (status: 'QUEUE' | 'PROCESSING' | 'ARCHIVE', title: string, darkColor: string, lightColor: string) => {

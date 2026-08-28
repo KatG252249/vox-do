@@ -67,9 +67,20 @@ export default function DashboardView({
         console.log("✅ Artifacts fetched:", snapArtifacts.docs.length);
 
         // 3. Fetch Journals
-        const qJournals = query(collection(db, "journals"), where("userEmail", "==", email));
+           const qJournals = query(collection(db, "journals"), where("userEmail", "==", email));
         const snapJournals = await getDocs(qJournals);
-        const fetchedJournals = snapJournals.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const fetchedJournals = snapJournals.docs.map(doc => {
+          const data: any = doc.data();
+          const dateStr = data.date || '';
+          const [year, month, day] = dateStr.split('-');
+          return {
+            id: doc.id,
+            ...data,
+            year: data.year || year || '',
+            month: data.month || month || '',
+            day: data.day || day || '',
+          };
+        });
         console.log("✅ Journals fetched:", snapJournals.docs.length);
 
         // 4. Send the array to your UI!

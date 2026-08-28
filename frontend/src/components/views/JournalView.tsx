@@ -11,19 +11,31 @@ interface JournalViewProps {
   onDelete: (id: number) => void;
 }
 
+const MONTH_NAMES: Record<string, string> = {
+  '01': 'January', '02': 'February', '03': 'March', '04': 'April', '05': 'May', '06': 'June',
+  '07': 'July', '08': 'August', '09': 'September', '10': 'October', '11': 'November', '12': 'December'
+};
+
 export default function JournalView({ onBack, darkMode, entries, onDelete }: JournalViewProps) {
   const [selectedId, setSelectedId] = useState<number | null>(entries.length > 0 ? entries[0].id : null);
   const [filterYear, setFilterYear] = useState('ALL');
   const [filterMonth, setFilterMonth] = useState('ALL');
+  const [filterDay, setFilterDay] = useState('ALL');
   const [searchTag, setSearchTag] = useState('');
+
+  // Dynamic dropdown options from actual entry data
+  const availableYears = Array.from(new Set(entries.map(e => e.year))).sort().reverse();
+  const availableMonths = Array.from(new Set(entries.map(e => e.month))).sort();
+  const availableDays = Array.from(new Set(entries.map(e => e.day))).sort();
 
   const filteredLogs = entries.filter(log => {
     const matchYear = filterYear === 'ALL' || log.year === filterYear;
     const matchMonth = filterMonth === 'ALL' || log.month === filterMonth;
+    const matchDay = filterDay === 'ALL' || log.day === filterDay;
     const matchSearch = searchTag === '' || 
       log.tags.some(t => t.toLowerCase().includes(searchTag.toLowerCase())) ||
       log.title.toLowerCase().includes(searchTag.toLowerCase());
-    return matchYear && matchMonth && matchSearch;
+    return matchYear && matchMonth && matchDay && matchSearch;
   });
 
   // Ensure active log remains valid after deletion
@@ -50,8 +62,46 @@ export default function JournalView({ onBack, darkMode, entries, onDelete }: Jou
           <ArrowLeft size={14} /> Back to Dashboard
         </button>
 
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 text-xs w-full">
-          {/* ... existing filters remain the same ... */}
+      <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 text-xs w-full">
+        {/* Year Filter */}
+        <select
+          value={filterYear}
+          onChange={(e) => setFilterYear(e.target.value)}
+          className={`border px-2 py-1.5 text-xs outline-none ${
+            darkMode ? 'border-[#1f3a2c] bg-[#0a0f0d] text-[#d1ffd7]' : 'border-emerald-200 bg-white text-gray-900'
+          }`}
+        >
+          <option value="ALL">All Years</option>
+          {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+
+        {/* Month Filter */}
+        <select
+          value={filterMonth}
+          onChange={(e) => setFilterMonth(e.target.value)}
+          className={`border px-2 py-1.5 text-xs outline-none ${
+            darkMode ? 'border-[#1f3a2c] bg-[#0a0f0d] text-[#d1ffd7]' : 'border-emerald-200 bg-white text-gray-900'
+        }`}
+        >
+          <option value="ALL">All Months</option>
+            {availableMonths.map(m => (
+              <option key={m} value={m}>{MONTH_NAMES[m] || m}</option>
+            ))}
+        </select>
+
+          {/* Day Filter */}
+          <select
+            value={filterDay}
+            onChange={(e) => setFilterDay(e.target.value)}
+            className={`border px-2 py-1.5 text-xs outline-none ${
+              darkMode ? 'border-[#1f3a2c] bg-[#0a0f0d] text-[#d1ffd7]' : 'border-emerald-200 bg-white text-gray-900'
+          }`}
+        >
+          <option value="ALL">All Days</option>
+          {availableDays.map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
+
+          {/* Existing Search Box */}
           <div className={`col-span-2 sm:flex-1 flex items-center border px-2 py-1.5 ${
             darkMode ? 'border-[#1f3a2c] bg-[#0a0f0d]' : 'border-emerald-200 bg-white'
           }`}>
@@ -63,11 +113,11 @@ export default function JournalView({ onBack, darkMode, entries, onDelete }: Jou
               onChange={(e) => setSearchTag(e.target.value)}
               className={`bg-transparent outline-none text-xs w-full ${
                 darkMode ? 'text-[#d1ffd7]' : 'text-gray-900 placeholder:text-gray-400'
-              }`}
-            />
-          </div>
+            }`}
+          />
         </div>
-      </div>
+      </div>  
+      </div>.
 
       {/* Split-Pane Feed */}
       <div className={`grid grid-cols-1 md:grid-cols-12 border min-h-[480px] ${darkMode ? 'border-[#1f3a2c]' : 'border-emerald-200'}`}>
