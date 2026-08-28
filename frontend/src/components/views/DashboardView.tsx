@@ -26,7 +26,7 @@ export default function DashboardView({
   artifacts, 
   onNewProcessedData 
 }: DashboardViewProps) {
-  const {data: session} = useSession();
+  const {data: session, status} = useSession();
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -36,8 +36,13 @@ export default function DashboardView({
   console.log("DashboardView component is rendering! Session is:", session);
 
   useEffect(() => {
+    console.log("Checking session before DB fetch. Status:", status, "Session:", session); 
 
-    console.log("Checking session before DB fetch:", session); 
+    // 1. NEW GUARD CLAUSE: Wait for NextAuth to finish its background loading
+    if (status === "loading") {
+      console.log("Session is loading, holding fetch...");
+      return;
+    }
 
     const fetchUserData = async () => {
       if (!session?.user?.email) {
@@ -64,14 +69,13 @@ export default function DashboardView({
         const snapJournals = await getDocs(qJournals);
         const fetchedJournals = snapJournals.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // 3. Send the array to your UI!
+        // 4. Send the array to your UI!
         onNewProcessedData({ 
             tasks: fetchedTasks as any,
             artifact: fetchedArtifacts as any,
             journal: fetchedJournals as any 
         });
-          console.log("Successfully loaded tasks into the UI!");
-        
+        console.log("Successfully loaded tasks into the UI!");
 
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -79,7 +83,9 @@ export default function DashboardView({
     };
 
     fetchUserData();
-  }, [session]);
+
+  // 2. NEW DEPENDENCY ARRAY: Watch the specific email string and status state
+  }, [session?.user?.email, status]);
     
   const playCompletionChime = () => {
   try {
