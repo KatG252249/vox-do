@@ -15,7 +15,7 @@ interface DashboardViewProps {
   tasks: Task[];
   journalEntries: JournalEntry[];
   artifacts: ArtifactItem[];
-  onNewProcessedData: (data: { journal?: any; tasks?: Task[]; artifact?: any }) => void;
+  onNewProcessedData: (data: { journal?: any; journals?: any[];tasks?: Task[]; artifact?: any; artifacts?: any [] }) => void;
 }
 
 export default function DashboardView({ 
@@ -58,22 +58,25 @@ export default function DashboardView({
         const qTasks = query(collection(db, "tasks"), where("userEmail", "==", email));
         const snapTasks = await getDocs(qTasks);
         const fetchedTasks = snapTasks.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("✅ Tasks fetched:", snapTasks.docs.length);
 
         // 2. Fetch Artifacts
         const qArtifacts = query(collection(db, "artifacts"), where("userEmail", "==", email));
         const snapArtifacts = await getDocs(qArtifacts);
         const fetchedArtifacts = snapArtifacts.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("✅ Artifacts fetched:", snapArtifacts.docs.length);
 
         // 3. Fetch Journals
         const qJournals = query(collection(db, "journals"), where("userEmail", "==", email));
         const snapJournals = await getDocs(qJournals);
         const fetchedJournals = snapJournals.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("✅ Journals fetched:", snapJournals.docs.length);
 
         // 4. Send the array to your UI!
         onNewProcessedData({ 
             tasks: fetchedTasks as any,
-            artifact: fetchedArtifacts as any,
-            journal: fetchedJournals as any 
+            artifacts: fetchedArtifacts as any,
+            journals: fetchedJournals as any 
         });
         console.log("Successfully loaded tasks into the UI!");
 
